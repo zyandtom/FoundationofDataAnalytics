@@ -178,7 +178,7 @@ params = {
 }
 
 dtrain = xgb.DMatrix(x_train, y_train)
-num_rounds = 1500
+num_rounds = 1000
 plst = list(params.items())
 model = xgb.train(plst, dtrain, num_rounds)
 
