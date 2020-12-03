@@ -4,7 +4,25 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn import metrics
 from matplotlib import pyplot as plt
+import datetime as dt
+import numpy as np
 
+
+max_min_scaler = lambda x : (x-np.min(x))/(np.max(x)-np.min(x))
+
+weather = pd.read_csv('./hua.csv', parse_dates=['Time'])
+weather['temperature'] =  weather[['temperature']].apply(max_min_scaler)
+weather['wet'] =  weather[['wet']].apply(max_min_scaler)
+weather['cloud'] =  weather[['cloud']].apply(max_min_scaler)
+weather['rain'] =  weather[['rain']].apply(max_min_scaler)
+weather['wind'] =  weather[['wind']].apply(max_min_scaler)
+
+weather['year'] = weather['Time'].dt.year
+weather['month'] = weather['Time'].dt.month
+weather['day'] = weather['Time'].dt.day
+weather=weather.drop('Time',axis=1)
+weather['year'] = 1  #2018
+weather['year'].iloc[:365] = 0  #2017
 
 df = pd.read_csv("train.csv")
 df["time"] = df["date"].apply(lambda x : int(x[-5:-3]))
@@ -59,7 +77,7 @@ df['winter'].iloc[13260:14006] = 1
 df.drop(["date"], axis = 1, inplace=True)
 df.drop(["id"], axis = 1, inplace=True)
 ydata = df["speed"]
-xdata = df[["time", "day", "month", 'holiday', 'spring', 'summer', 'autumn', 'winter']]
+xdata = df[["time", "day", "month", 'spring', 'summer', 'autumn', 'winter']]
 xdata['year'] = 0
 xdata['year'].iloc[8750:14006] = 1
 ##############################(weekend)
@@ -132,7 +150,7 @@ dft.drop(["id"], axis = 1, inplace=True)
 # tempdf["year_2017"] = 0
 # tempdf = pd.concat([tempdf, temp], axis = 1)
 
-xtest = dft[["time", "day", "month", 'holiday', 'spring', 'summer', 'autumn', 'winter']]
+xtest = dft[["time", "day", "month", 'spring', 'summer', 'autumn', 'winter']]
 xtest['year'] = 1
 
 ##########################################################################weekend
@@ -158,6 +176,9 @@ for i in range(1, len(dayt)):
         else: weekendt.append(7)
 xtest["weekend"] = weekendt
 
+############################################
+xdata = pd.merge(xdata, weather, on = ['year','month', 'day'], how = 'left')
+xtest = pd.merge(xtest, weather, on = ['year','month', 'day'], how = 'left')
 ##################################################################
 x_train, x_test, y_train, y_test = train_test_split(
     xdata, ydata, test_size=0.2, random_state=1)
@@ -168,40 +189,40 @@ params = {
     'gamma': 0,
     'max_depth': 70,
     'lambda': 3,
-    'subsample': 0.5,
+    'subsample': 0.4,
     'colsample_bytree': 1,
     'min_child_weight': 0,
     'silent': 0,
     'eta': 0.01,
-    'seed': 1000,
+    'seed': 0,
     'nthread': 4
 }
 
 dtrain = xgb.DMatrix(x_train, y_train)
-num_rounds = 1000
+num_rounds = 1200
 plst = list(params.items())
 model = xgb.train(plst, dtrain, num_rounds)
 
 ################################################################################
-predict_y_train = model.predict(xgb.DMatrix(x_train))
-predict_y_test = model.predict(xgb.DMatrix(x_test))
-
-print("trainMSE:",metrics.mean_squared_error(y_train, predict_y_train))
-print("testMSE:",metrics.mean_squared_error(y_test, predict_y_test))
-
-
-plot_importance(model)
-plt.show()
-
-
-
-# dtrain = xgb.DMatrix(xdata, ydata)
-# num_rounds = 900
-# plst = list(params.items())
-# model = xgb.train(plst, dtrain, num_rounds)
+# predict_y_train = model.predict(xgb.DMatrix(x_train))
+# predict_y_test = model.predict(xgb.DMatrix(x_test))
 #
-# res = model.predict(xgb.DMatrix(xtest))
-# sub = pd.read_csv("sampleSubmission.csv")
-# del sub['speed']
-# sub['speed'] = res
-# sub.to_csv("result7.csv", index=False)
+# print("trainMSE:",metrics.mean_squared_error(y_train, predict_y_train))
+# print("testMSE:",metrics.mean_squared_error(y_test, predict_y_test))
+#
+#
+# plot_importance(model)
+# plt.show()
+
+
+
+dtrain = xgb.DMatrix(xdata, ydata)
+num_rounds = 1200
+plst = list(params.items())
+model = xgb.train(plst, dtrain, num_rounds)
+
+res = model.predict(xgb.DMatrix(xtest))
+sub = pd.read_csv("sampleSubmission.csv")
+del sub['speed']
+sub['speed'] = res
+sub.to_csv("result8.csv", index=False)
