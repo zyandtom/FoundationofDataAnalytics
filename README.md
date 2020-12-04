@@ -8,3 +8,5 @@ linear.py uses the linear moedel to fit the data.
 Rrf.py uses the randomforest moedel to fit the data.
 
 XGBoost.py uses the xgboost moedel to fit the data.
+
+every .py file can simply run it!
