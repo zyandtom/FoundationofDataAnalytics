@@ -10,7 +10,7 @@ import numpy as np
 
 max_min_scaler = lambda x : (x-np.min(x))/(np.max(x)-np.min(x))
 
-weather = pd.read_csv('./hua.csv', parse_dates=['Time'])
+weather = pd.read_csv('./wind.csv', parse_dates=['Time'])
 weather['temperature'] =  weather[['temperature']].apply(max_min_scaler)
 weather['wet'] =  weather[['wet']].apply(max_min_scaler)
 weather['cloud'] =  weather[['cloud']].apply(max_min_scaler)
@@ -186,22 +186,23 @@ x_train, x_test, y_train, y_test = train_test_split(
 params = {
     'booster': 'gbtree',
     'objective': 'reg:squarederror',
-    'gamma': 0,
-    'max_depth': 70,
+    'gamma': 0.05,
+    'max_depth': 50,
     'lambda': 3,
     'subsample': 0.4,
     'colsample_bytree': 1,
     'min_child_weight': 0,
-    'silent': 0,
     'eta': 0.01,
     'seed': 0,
     'nthread': 4
 }
-
+dtest = xgb.DMatrix(x_test, y_test)
 dtrain = xgb.DMatrix(x_train, y_train)
-num_rounds = 1200
+num_rounds = 1030
 plst = list(params.items())
-model = xgb.train(plst, dtrain, num_rounds)
+
+watchlist = [(dtrain,'train'),(dtest,'val')]
+model = xgb.train(plst, dtrain, num_rounds, evals=watchlist)
 
 ################################################################################
 # predict_y_train = model.predict(xgb.DMatrix(x_train))
@@ -225,4 +226,4 @@ res = model.predict(xgb.DMatrix(xtest))
 sub = pd.read_csv("sampleSubmission.csv")
 del sub['speed']
 sub['speed'] = res
-sub.to_csv("result8.csv", index=False)
+sub.to_csv("result9.csv", index=False)
