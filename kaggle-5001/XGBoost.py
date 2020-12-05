@@ -226,4 +226,4 @@ res = model.predict(xgb.DMatrix(xtest))
 sub = pd.read_csv("sampleSubmission.csv")
 del sub['speed']
 sub['speed'] = res
-sub.to_csv("result9.csv", index=False)
+sub.to_csv("result.csv", index=False)
